@@ -58,7 +58,7 @@ const serial = async (
     arduino.pipe(new serialport.ReadlineParser({ delimiter: '\r\n' })).on('data', async (data) => {
         //console.log(data);
         const valores = data.split(';');
-        const lm35Temperatura = parseFloat(valores[0]);
+        const lm35Temperatura = parseFloat(valores);
 
         valoresLm35Temperatura.push(lm35Temperatura);
 
@@ -92,11 +92,13 @@ const serial = async (
                 // -> altere nome da tabela e colunas se necessário
                 // Este insert irá inserir dados de fk_aquario id=1 (fixo no comando do insert abaixo)
                 // >> você deve ter o aquario de id 1 cadastrado.
-                await poolBancoDados.execute(
-                    'INSERT INTO registroSensor (temperatura, dtHora, fkSensor) VALUES (?, now(), 1)',
-                    [lm35Temperatura]
-                );
-                console.log("valores inseridos no banco: ", lm35Temperatura)
+                for(var i = 0; i < valoresLm35Temperatura.length; i++){
+                    await poolBancoDados.execute(
+                        `INSERT INTO registroSensor (temperatura, dtHora, fkSensor) VALUES (?, now(), ?)`,
+                        valoresLm35Temperatura[i], (i + 1)
+                    );
+                    console.log("valores inseridos no banco: ", lm35Temperatura)
+                }
 
             } else {
                 throw new Error('Ambiente não configurado. Verifique o arquivo "main.js" e tente novamente.');
